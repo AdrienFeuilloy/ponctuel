@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Doomsday</title>
+<title>Quiz Avengers Doomsday</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
   :root {
     --bg: #f6f5f2; --surface: #ffffff; --text: #1c1b19; --muted: #5c5a55;
     --border: #e3e1dc; --primary: #2f5bd3; --on-primary: #ffffff; --focus: #2f5bd3;
-    --ok: #1d7a3e; --ko: #b3261e;
+    --ok: #1d7a3e; --ok-bg: #e3f4e8; --ko: #b3261e; --ko-bg: #fbe5e3;
     --radius: 12px; --speed: 160ms;
     color-scheme: light dark;
   }
@@ -17,7 +17,7 @@
     :root {
       --bg: #141413; --surface: #1f1f1d; --text: #f1efea; --muted: #a9a69e;
       --border: #34332f; --primary: #8aa8ff; --on-primary: #10182e; --focus: #8aa8ff;
-      --ok: #6fd08f; --ko: #ff8a80;
+      --ok: #6fd08f; --ok-bg: #18301f; --ko: #ff8a80; --ko-bg: #3a1c1a;
     }
   }
   * { box-sizing: border-box; }
@@ -32,10 +32,11 @@
   .retour { display: inline-block; margin-bottom: 16px; color: var(--muted); }
   .carte {
     padding: 24px 16px; border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--surface); text-align: center;
+    background: var(--surface); text-align: center; margin-bottom: 16px;
   }
   .num { color: var(--muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
-  .date { margin: 8px 0; font-size: clamp(1.75rem, 7vw, 2.5rem); font-weight: 700; line-height: 1.2; }
+  .gros { margin: 8px 0; font-size: clamp(1.75rem, 7vw, 2.5rem); font-weight: 700; line-height: 1.2; }
+  .question { margin: 8px 0 0; font-size: 1.25rem; font-weight: 700; line-height: 1.35; text-wrap: balance; }
   .choix { display: grid; gap: 12px; }
   button, .bouton {
     min-height: 48px; padding: 12px 16px; border-radius: var(--radius); font: inherit; font-weight: 600;
@@ -48,8 +49,22 @@
   button:focus-visible, .bouton:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   button:disabled { opacity: .5; cursor: default; transform: none; }
   .principal { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
-  .jours { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 16px; }
-  .jours button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); opacity: 1; }
+  /* Les 4 réponses */
+  .reponses { display: grid; gap: 8px; margin-top: 16px; text-align: left; }
+  @media (min-width: 560px) { .reponses { grid-template-columns: 1fr 1fr; } }
+  .rep {
+    display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 56px;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+    font-weight: 500; text-align: left;
+  }
+  .lettre {
+    flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg); font-weight: 700;
+  }
+  .rep[aria-pressed="true"] { border-color: var(--primary); box-shadow: inset 0 0 0 2px var(--primary); opacity: 1; }
+  .rep.bonne { border-color: var(--ok); background: var(--ok-bg); opacity: 1; }
+  .rep.fausse { border-color: var(--ko); background: var(--ko-bg); opacity: 1; }
+  .compte { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
   label { display: block; font-weight: 600; margin-bottom: 8px; }
   input {
     width: 100%; min-height: 48px; padding: 12px; font: inherit; border-radius: var(--radius);
@@ -58,20 +73,22 @@
   .erreur { color: var(--ko); margin: 8px 0 0; }
   form { display: grid; gap: 16px; }
   .etat { margin: 16px 0 0; color: var(--muted); }
-  .bonne { margin: 8px 0 0; color: var(--muted); overflow-wrap: anywhere; }
-  .code { margin-bottom: 16px; }
+  .etat.ok { color: var(--ok); font-weight: 600; }
+  .etat.ko { color: var(--ko); font-weight: 600; }
+  .petit { margin: 8px 0 0; color: var(--muted); overflow-wrap: anywhere; }
   #m-code { letter-spacing: .15em; font-variant-numeric: tabular-nums; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ul, ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   li {
     display: flex; align-items: center; gap: 12px; padding: 12px 16px; flex-wrap: wrap;
     border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
   }
   .pseudo { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
-  .rep { color: var(--muted); }
+  .info { color: var(--muted); }
   .ok { color: var(--ok); font-weight: 600; }
   .ko { color: var(--ko); font-weight: 600; }
-  .temps { color: var(--muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
-  .actions { display: grid; gap: 12px; margin-top: 16px; }
+  .pts { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .rang { width: 2ch; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .actions { display: grid; gap: 12px; margin-bottom: 16px; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -79,17 +96,17 @@
 <main>
   <a class="retour" href="../index.html">← Ponctuel</a>
 
-  <!-- Écran de choix du rôle -->
+  <!-- Choix du rôle -->
   <section id="accueil" hidden>
-    <h1>Doomsday</h1>
-    <p class="muted">Trouver de tête le jour de la semaine d'une date.</p>
+    <h1>Quiz Avengers Doomsday</h1>
+    <p class="muted">Tout ce qu'il faut savoir avant de voir le film.</p>
     <div class="choix">
       <a class="bouton principal" href="#joueur">Je joue</a>
       <a class="bouton" href="#maitre">Je suis le maître du jeu</a>
     </div>
   </section>
 
-  <!-- Joueur : choix du pseudo -->
+  <!-- Joueur : pseudo + code -->
   <section id="login" hidden>
     <h1>Rejoindre la partie</h1>
     <p class="muted">Pas de mot de passe : choisis juste ton pseudo.</p>
@@ -108,13 +125,13 @@
     </form>
   </section>
 
-  <!-- Joueur : question -->
+  <!-- Joueur : jeu -->
   <section id="jeu" hidden>
-    <p class="muted">Joueur : <strong id="moi"></strong></p>
+    <p class="muted">Joueur : <strong id="moi"></strong> · <span id="j-score">0 point</span></p>
     <div class="carte">
       <div class="num" id="j-num">En attente</div>
-      <div class="date" id="j-date">La partie va commencer…</div>
-      <div class="jours" id="jours" hidden></div>
+      <p class="question" id="j-question">La partie va bientôt commencer…</p>
+      <div class="reponses" id="j-reponses" hidden></div>
       <p class="etat" id="j-etat" aria-live="polite"></p>
     </div>
   </section>
@@ -122,51 +139,62 @@
   <!-- Maître du jeu -->
   <section id="maitre" hidden>
     <h1>Maître du jeu</h1>
-    <div class="carte code">
-      <div class="num">Code de la partie</div>
-      <div class="date" id="m-code">…</div>
-      <p class="bonne" id="m-lien"></p>
-    </div>
     <div class="carte">
-      <div class="num" id="m-num">Pas encore de question</div>
-      <div class="date" id="m-date">—</div>
-      <p class="bonne" id="m-bonne"></p>
+      <div class="num">Code de la partie</div>
+      <div class="gros" id="m-code">…</div>
+      <p class="petit" id="m-lien"></p>
+    </div>
+    <div class="carte" id="m-carte" hidden>
+      <div class="num" id="m-num"></div>
+      <p class="question" id="m-question"></p>
+      <div class="reponses" id="m-reponses"></div>
     </div>
     <div class="actions">
-      <button class="principal" id="suivante">Première question</button>
+      <button class="principal" id="action">Commencer le quiz</button>
     </div>
     <h2 id="m-titre">Joueurs (0)</h2>
-    <ul id="joueurs"></ul>
+    <ol id="joueurs"></ol>
     <p class="muted" id="m-vide">Aucun joueur pour l'instant. Les joueurs ouvrent cette page sur leur téléphone, choisissent « Je joue » et tapent le code.</p>
   </section>
 </main>
 
 <script>
+  // Questions du quiz : une ligne par question, "bonne" = numéro de la bonne réponse (0 = A, 1 = B, 2 = C, 3 = D).
+  // shortcut: questions de test, à remplacer par les vraies questions.
+  const QUESTIONS = Array.from({ length: 20 }, (_, i) => ({
+    q: "Question test " + (i + 1) + " : quelle est la bonne réponse ?",
+    choix: ["Réponse A", "Réponse B", "Réponse C", "Réponse D"],
+    bonne: (i * 7 + 3) % 4,
+  }));
+
   // Les téléphones se relient en direct (WebRTC) ; le service gratuit PeerJS sert juste à les présenter.
   const PREFIXE = "ponctuel-doomsday-";
-  const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-  const ORDRE = [1, 2, 3, 4, 5, 6, 0]; // boutons du lundi au dimanche
+  const LETTRES = "ABCD";
   const $ = id => document.getElementById(id);
-
-  const jourDe = iso => new Date(iso + "T00:00:00Z").getUTCDay();
-  const formate = iso => new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-  console.assert(jourDe("2000-01-01") === 6 && jourDe("1969-07-20") === 0 && jourDe("2026-11-24") === 2, "calcul du jour");
-
-  function dateAuHasard() {
-    const debut = Date.UTC(1900, 0, 1), fin = Date.UTC(2099, 11, 31);
-    const jour = Math.floor(Math.random() * ((fin - debut) / 864e5 + 1));
-    return new Date(debut + jour * 864e5).toISOString().slice(0, 10);
-  }
+  const points = n => n + (n > 1 ? " points" : " point");
 
   function lire(cle) { try { return localStorage.getItem(cle) || ""; } catch { return ""; } }
   function ecrire(cle, v) { try { localStorage.setItem(cle, v); } catch {} }
 
-  // ---------- Joueur ----------
-  const joueur = { id: lire("dd-id") || Math.random().toString(36).slice(2), pseudo: "", n: 0, debut: 0 };
-  ecrire("dd-id", joueur.id);
+  function boutonsReponses(conteneur, choix, onClic) {
+    conteneur.textContent = "";
+    choix.forEach((texte, i) => {
+      const b = document.createElement(onClic ? "button" : "div");
+      b.className = "rep";
+      const l = document.createElement("span"); l.className = "lettre"; l.textContent = LETTRES[i]; l.setAttribute("aria-hidden", "true");
+      const t = document.createElement("span"); t.textContent = texte;
+      b.append(l, t);
+      if (onClic) { b.setAttribute("aria-pressed", "false"); b.setAttribute("aria-label", LETTRES[i] + " : " + texte); b.onclick = () => onClic(i, b); }
+      conteneur.append(b);
+    });
+  }
 
+  // ---------- Joueur ----------
+  const joueur = { id: lire("dd-id") || Math.random().toString(36).slice(2), pseudo: "", n: 0, choix: -1 };
+  ecrire("dd-id", joueur.id);
   $("pseudo").value = lire("dd-pseudo");
   $("code").value = new URLSearchParams(location.search).get("code") || "";
+
   $("form-login").addEventListener("submit", e => {
     e.preventDefault();
     const p = $("pseudo").value.trim();
@@ -198,77 +226,153 @@
         montrer("jeu");
         conn.send({ t: "join", id: joueur.id, pseudo: joueur.pseudo });
       });
-      conn.on("data", m => { if (m.t === "question") recevoirQuestion(m.n, m.date); });
+      conn.on("data", recevoir);
       conn.on("close", () => { joueur.n = 0; echec("Connexion perdue. Appuie sur Rejoindre pour revenir."); });
     });
   }
 
-  for (const j of ORDRE) {
-    const b = document.createElement("button");
-    b.textContent = JOURS[j][0].toUpperCase() + JOURS[j].slice(1);
-    b.setAttribute("aria-pressed", "false");
-    b.onclick = () => repondre(j, b);
-    $("jours").append(b);
+  function etat(texte, classe = "") { $("j-etat").textContent = texte; $("j-etat").className = "etat " + classe; }
+
+  function recevoir(m) {
+    if ("score" in m) $("j-score").textContent = points(m.score);
+    if (m.t === "question") {
+      if (m.n !== joueur.n) joueur.choix = m.choix ?? -1;
+      joueur.n = m.n;
+      $("j-num").textContent = "Question " + m.n + " / " + m.total;
+      $("j-question").textContent = m.q;
+      $("j-reponses").hidden = false;
+      boutonsReponses($("j-reponses"), m.reponses, repondre);
+      if (joueur.choix >= 0) marquerChoix();
+      else etat("Choisis ta réponse.");
+    }
+    if (m.t === "reveal" && m.n === joueur.n) {
+      const btns = $("j-reponses").children;
+      for (const b of btns) b.disabled = true;
+      btns[m.bonne].classList.add("bonne");
+      if (joueur.choix === m.bonne) etat("✓ Bonne réponse !", "ok");
+      else {
+        if (joueur.choix >= 0) btns[joueur.choix].classList.add("fausse");
+        etat((joueur.choix < 0 ? "Pas de réponse. " : "✗ Raté. ") + "C'était " + LETTRES[m.bonne] + ".", "ko");
+      }
+    }
+    if (m.t === "fin") {
+      $("j-num").textContent = "Fin du quiz";
+      $("j-question").textContent = m.rang === 1 ? "Tu as gagné !" : "Tu finis " + m.rang + "e sur " + m.nb + ".";
+      $("j-reponses").hidden = true;
+      etat("Score final : " + points(m.score) + " sur " + m.total + ".");
+    }
   }
 
-  function repondre(j, bouton) {
-    for (const b of $("jours").children) b.disabled = true;
-    bouton.setAttribute("aria-pressed", "true");
-    $("j-etat").textContent = "Réponse envoyée. Attends la question suivante.";
-    joueur.conn.send({ t: "answer", id: joueur.id, pseudo: joueur.pseudo, n: joueur.n, jour: j, ms: Date.now() - joueur.debut });
+  function repondre(i) {
+    joueur.choix = i;
+    marquerChoix();
+    joueur.conn.send({ t: "answer", id: joueur.id, n: joueur.n, choix: i });
   }
 
-  function recevoirQuestion(n, date) {
-    if (n === joueur.n) return;
-    joueur.n = n; joueur.debut = Date.now();
-    $("j-num").textContent = "Question " + n;
-    $("j-date").textContent = formate(date);
-    $("jours").hidden = false;
-    for (const b of $("jours").children) { b.disabled = false; b.setAttribute("aria-pressed", "false"); }
-    $("j-etat").textContent = "Quel jour de la semaine ?";
+  function marquerChoix() {
+    for (const [i, b] of [...$("j-reponses").children].entries()) {
+      b.disabled = true; b.setAttribute("aria-pressed", String(i === joueur.choix));
+    }
+    etat("Réponse " + LETTRES[joueur.choix] + " envoyée. Attends la correction.");
   }
 
   // ---------- Maître du jeu ----------
-  const partie = { n: 0, date: "", joueurs: new Map(), conns: new Set(), peer: null }; // id → { pseudo, rep: {jour, ms} | null }
+  // phase : "attente" (avant le début), "question", "reveal", "fin"
+  const partie = { phase: "attente", i: -1, joueurs: new Map(), conns: new Map(), peer: null };
 
-  $("suivante").onclick = () => {
-    partie.n++; partie.date = dateAuHasard();
-    for (const j of partie.joueurs.values()) j.rep = null;
-    $("m-num").textContent = "Question " + partie.n;
-    $("m-date").textContent = formate(partie.date);
-    $("m-bonne").textContent = "Bonne réponse : " + JOURS[jourDe(partie.date)];
-    $("suivante").textContent = "Question suivante";
-    envoyerQuestion();
-    afficherJoueurs();
+  $("action").onclick = () => {
+    if (partie.phase === "question") return reveler();
+    if (partie.phase === "fin") return;
+    if (partie.i + 1 >= QUESTIONS.length) return terminer();
+    partie.i++; partie.phase = "question";
+    for (const j of partie.joueurs.values()) j.choix = -1;
+    for (const id of partie.conns.keys()) envoyerEtat(id);
+    afficher();
   };
 
-  function envoyerQuestion() {
-    if (!partie.n) return;
-    for (const c of partie.conns) if (c.open) c.send({ t: "question", n: partie.n, date: partie.date });
+  function reveler() {
+    partie.phase = "reveal";
+    const bonne = QUESTIONS[partie.i].bonne;
+    for (const j of partie.joueurs.values()) if (j.choix === bonne) j.score++;
+    for (const id of partie.conns.keys()) envoyerEtat(id);
+    afficher();
   }
 
-  function afficherJoueurs() {
-    const ul = $("joueurs"); ul.textContent = "";
-    $("m-titre").textContent = "Joueurs (" + partie.joueurs.size + ")";
-    $("m-vide").hidden = partie.joueurs.size > 0;
-    const bonne = partie.date ? jourDe(partie.date) : -1;
-    for (const j of partie.joueurs.values()) {
-      const li = document.createElement("li");
-      const nom = document.createElement("span"); nom.className = "pseudo"; nom.textContent = j.pseudo;
-      li.append(nom);
-      const r = document.createElement("span");
-      if (!partie.n) { r.className = "rep"; r.textContent = "Prêt"; }
-      else if (!j.rep) { r.className = "rep"; r.textContent = "Réfléchit…"; }
-      else {
-        const juste = j.rep.jour === bonne;
-        r.className = juste ? "ok" : "ko";
-        r.textContent = (juste ? "✓ Juste : " : "✗ Faux : ") + JOURS[j.rep.jour];
-        const t = document.createElement("span"); t.className = "temps";
-        t.textContent = (j.rep.ms / 1000).toFixed(1) + " s";
-        li.append(r, t); ul.append(li); continue;
-      }
-      li.append(r); ul.append(li);
+  function classement() {
+    return [...partie.joueurs.entries()].sort((a, b) => b[1].score - a[1].score);
+  }
+
+  function terminer() {
+    partie.phase = "fin";
+    for (const id of partie.conns.keys()) envoyerEtat(id);
+    afficher();
+  }
+
+  // Envoie à un joueur tout ce qu'il doit voir maintenant (sert aussi s'il revient après une coupure).
+  function envoyerEtat(id) {
+    const conn = partie.conns.get(id), j = partie.joueurs.get(id);
+    if (!conn || !conn.open || !j) return;
+    const Q = QUESTIONS[partie.i];
+    if (partie.phase === "question" || partie.phase === "reveal")
+      conn.send({ t: "question", n: partie.i + 1, total: QUESTIONS.length, q: Q.q, reponses: Q.choix, choix: j.choix, score: j.score });
+    if (partie.phase === "reveal") conn.send({ t: "reveal", n: partie.i + 1, bonne: Q.bonne, score: j.score });
+    if (partie.phase === "fin") {
+      // ex æquo = même rang
+      const rang = 1 + classement().filter(([, x]) => x.score > j.score).length;
+      conn.send({ t: "fin", rang, nb: partie.joueurs.size, score: j.score, total: QUESTIONS.length });
     }
+  }
+
+  function afficher() {
+    const Q = QUESTIONS[partie.i];
+    const enJeu = partie.phase === "question" || partie.phase === "reveal";
+    $("m-carte").hidden = !enJeu;
+    if (enJeu) {
+      $("m-num").textContent = "Question " + (partie.i + 1) + " / " + QUESTIONS.length;
+      $("m-question").textContent = Q.q;
+      boutonsReponses($("m-reponses"), Q.choix);
+      const reps = $("m-reponses").children;
+      reps[Q.bonne].classList.add("bonne"); // le maître du jeu voit toujours la bonne réponse
+      for (let i = 0; i < 4; i++) {
+        const c = document.createElement("span"); c.className = "compte";
+        const n = [...partie.joueurs.values()].filter(j => j.choix === i).length;
+        c.textContent = n ? n + " joueur" + (n > 1 ? "s" : "") : "";
+        reps[i].append(c);
+      }
+    }
+    const derniere = partie.i + 1 >= QUESTIONS.length;
+    $("action").textContent = { attente: "Commencer le quiz", question: "Montrer la réponse", reveal: derniere ? "Voir le classement" : "Question suivante", fin: "Quiz terminé" }[partie.phase];
+    $("action").disabled = partie.phase === "fin";
+
+    const liste = partie.phase === "fin" || partie.phase === "reveal" ? classement() : [...partie.joueurs.entries()];
+    const nbRep = [...partie.joueurs.values()].filter(j => j.choix >= 0).length;
+    $("m-titre").textContent = partie.phase === "fin" ? "Classement final"
+      : partie.phase === "question" ? "Réponses (" + nbRep + " / " + partie.joueurs.size + ")"
+      : "Joueurs (" + partie.joueurs.size + ")";
+    $("m-vide").hidden = partie.joueurs.size > 0;
+    const ol = $("joueurs"); ol.textContent = "";
+    liste.forEach(([, j], k) => {
+      const li = document.createElement("li");
+      if (partie.phase === "fin" || partie.phase === "reveal") {
+        const r = document.createElement("span"); r.className = "rang";
+        r.textContent = 1 + liste.filter(([, x]) => x.score > j.score).length; li.append(r);
+      }
+      const nom = document.createElement("span"); nom.className = "pseudo"; nom.textContent = j.pseudo; li.append(nom);
+      const info = document.createElement("span");
+      if (partie.phase === "question") {
+        info.className = j.choix >= 0 ? "ok" : "info";
+        info.textContent = j.choix >= 0 ? "A répondu : " + LETTRES[j.choix] : "Réfléchit…";
+      } else if (partie.phase === "reveal") {
+        const juste = j.choix === Q.bonne;
+        info.className = juste ? "ok" : "ko";
+        info.textContent = j.choix < 0 ? "✗ Pas de réponse" : (juste ? "✓ " : "✗ ") + LETTRES[j.choix];
+      } else if (partie.phase === "attente") { info.className = "info"; info.textContent = "Prêt"; }
+      li.append(info);
+      if (partie.phase !== "attente") {
+        const p = document.createElement("span"); p.className = "pts"; p.textContent = points(j.score); li.append(p);
+      }
+      ol.append(li);
+    });
   }
 
   // shortcut: recharger la page du maître du jeu crée une nouvelle partie (nouveau code), à garder si ça gêne.
@@ -278,28 +382,28 @@
     const peer = partie.peer = new Peer(PREFIXE + code);
     peer.on("open", () => {
       $("m-code").textContent = code;
-      const lien = location.href.split(/[?#]/)[0] + "?code=" + code + "#joueur";
-      $("m-lien").textContent = "Lien direct pour les joueurs : " + lien;
+      $("m-lien").textContent = "Lien direct pour les joueurs : " + location.href.split(/[?#]/)[0] + "?code=" + code + "#joueur";
     });
     peer.on("error", e => {
       if (e.type === "unavailable-id") { partie.peer = null; peer.destroy(); ouvrirPartie(); } // code déjà pris : on en tire un autre
       else if (e.type !== "peer-unavailable") $("m-lien").textContent = "Connexion impossible. Vérifie internet puis recharge la page.";
     });
     peer.on("connection", conn => {
-      partie.conns.add(conn);
-      conn.on("close", () => partie.conns.delete(conn));
+      let id = null;
+      conn.on("close", () => { if (id && partie.conns.get(id) === conn) partie.conns.delete(id); });
       conn.on("data", m => {
         if (m.t === "join") {
-          const ancien = partie.joueurs.get(m.id);
-          partie.joueurs.set(m.id, { pseudo: m.pseudo, rep: ancien ? ancien.rep : null });
-          afficherJoueurs();
-          if (partie.n) conn.send({ t: "question", n: partie.n, date: partie.date });
+          id = m.id;
+          partie.conns.set(id, conn);
+          const j = partie.joueurs.get(id);
+          if (j) j.pseudo = m.pseudo; // retour après une coupure : on garde son score
+          else partie.joueurs.set(id, { pseudo: m.pseudo, score: 0, choix: -1 });
+          envoyerEtat(id); afficher();
         }
-        if (m.t === "answer" && m.n === partie.n) {
-          const j = partie.joueurs.get(m.id) || { pseudo: m.pseudo };
-          if (j.rep) return; // une seule réponse par question
-          j.rep = { jour: m.jour, ms: m.ms };
-          partie.joueurs.set(m.id, j); afficherJoueurs();
+        if (m.t === "answer" && partie.phase === "question" && m.n === partie.i + 1) {
+          const j = partie.joueurs.get(m.id);
+          if (!j || j.choix >= 0) return; // une seule réponse par question
+          j.choix = m.choix; afficher();
         }
       });
     });
@@ -309,7 +413,7 @@
   const role = () => location.hash.slice(1);
   function montrer(id) { for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== id; }
   function route() {
-    if (role() === "maitre") { montrer("maitre"); afficherJoueurs(); ouvrirPartie(); }
+    if (role() === "maitre") { montrer("maitre"); afficher(); ouvrirPartie(); }
     else if (role() === "joueur") { montrer(joueur.pseudo ? "jeu" : "login"); if (!joueur.pseudo) $("pseudo").focus(); }
     else montrer("accueil");
   }
