@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doomsday</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f5f2; --surface: #ffffff; --text: #1c1b19; --muted: #5c5a55;
+    --border: #e3e1dc; --primary: #2f5bd3; --on-primary: #ffffff; --focus: #2f5bd3;
+    --ok: #1d7a3e; --ko: #b3261e;
+    --radius: 12px; --speed: 160ms;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --surface: #1f1f1d; --text: #f1efea; --muted: #a9a69e;
+      --border: #34332f; --primary: #8aa8ff; --on-primary: #10182e; --focus: #8aa8ff;
+      --ok: #6fd08f; --ko: #ff8a80;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100dvh; background: var(--bg); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 2rem; line-height: 1.2; }
+  h2 { margin: 32px 0 12px; font-size: 1.125rem; }
+  .muted { color: var(--muted); margin: 0 0 24px; }
+  .retour { display: inline-block; margin-bottom: 16px; color: var(--muted); }
+  .carte {
+    padding: 24px 16px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); text-align: center;
+  }
+  .num { color: var(--muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
+  .date { margin: 8px 0; font-size: clamp(1.75rem, 7vw, 2.5rem); font-weight: 700; line-height: 1.2; }
+  .choix { display: grid; gap: 12px; }
+  button, .bouton {
+    min-height: 48px; padding: 12px 16px; border-radius: var(--radius); font: inherit; font-weight: 600;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    cursor: pointer; touch-action: manipulation; text-decoration: none; text-align: center;
+    transition: border-color var(--speed) ease, transform var(--speed) ease;
+  }
+  button:hover, .bouton:hover { border-color: var(--primary); }
+  button:active, .bouton:active { transform: scale(.98); }
+  button:focus-visible, .bouton:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: default; transform: none; }
+  .principal { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+  .jours { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 16px; }
+  .jours button[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); opacity: 1; }
+  label { display: block; font-weight: 600; margin-bottom: 8px; }
+  input {
+    width: 100%; min-height: 48px; padding: 12px; font: inherit; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  }
+  .erreur { color: var(--ko); margin: 8px 0 0; }
+  form { display: grid; gap: 16px; }
+  .etat { margin: 16px 0 0; color: var(--muted); }
+  .bonne { margin: 8px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+  .code { margin-bottom: 16px; }
+  #m-code { letter-spacing: .15em; font-variant-numeric: tabular-nums; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  li {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; flex-wrap: wrap;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  }
+  .pseudo { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+  .rep { color: var(--muted); }
+  .ok { color: var(--ok); font-weight: 600; }
+  .ko { color: var(--ko); font-weight: 600; }
+  .temps { color: var(--muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
+  .actions { display: grid; gap: 12px; margin-top: 16px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <a class="retour" href="../index.html">← Ponctuel</a>
+
+  <!-- Écran de choix du rôle -->
+  <section id="accueil" hidden>
+    <h1>Doomsday</h1>
+    <p class="muted">Trouver de tête le jour de la semaine d'une date.</p>
+    <div class="choix">
+      <a class="bouton principal" href="#joueur">Je joue</a>
+      <a class="bouton" href="#maitre">Je suis le maître du jeu</a>
+    </div>
+  </section>
+
+  <!-- Joueur : choix du pseudo -->
+  <section id="login" hidden>
+    <h1>Rejoindre la partie</h1>
+    <p class="muted">Pas de mot de passe : choisis juste ton pseudo.</p>
+    <form id="form-login" novalidate>
+      <div>
+        <label for="pseudo">Pseudo</label>
+        <input id="pseudo" maxlength="20" autocomplete="nickname" aria-describedby="err-pseudo">
+        <p class="erreur" id="err-pseudo" role="alert"></p>
+      </div>
+      <div>
+        <label for="code">Code de la partie</label>
+        <input id="code" inputmode="numeric" maxlength="4" autocomplete="off" aria-describedby="err-code">
+        <p class="erreur" id="err-code" role="alert"></p>
+      </div>
+      <button class="principal" type="submit">Rejoindre</button>
+    </form>
+  </section>
+
+  <!-- Joueur : question -->
+  <section id="jeu" hidden>
+    <p class="muted">Joueur : <strong id="moi"></strong></p>
+    <div class="carte">
+      <div class="num" id="j-num">En attente</div>
+      <div class="date" id="j-date">La partie va commencer…</div>
+      <div class="jours" id="jours" hidden></div>
+      <p class="etat" id="j-etat" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- Maître du jeu -->
+  <section id="maitre" hidden>
+    <h1>Maître du jeu</h1>
+    <div class="carte code">
+      <div class="num">Code de la partie</div>
+      <div class="date" id="m-code">…</div>
+      <p class="bonne" id="m-lien"></p>
+    </div>
+    <div class="carte">
+      <div class="num" id="m-num">Pas encore de question</div>
+      <div class="date" id="m-date">—</div>
+      <p class="bonne" id="m-bonne"></p>
+    </div>
+    <div class="actions">
+      <button class="principal" id="suivante">Première question</button>
+    </div>
+    <h2 id="m-titre">Joueurs (0)</h2>
+    <ul id="joueurs"></ul>
+    <p class="muted" id="m-vide">Aucun joueur pour l'instant. Les joueurs ouvrent cette page sur leur téléphone, choisissent « Je joue » et tapent le code.</p>
+  </section>
+</main>
+
+<script>
+  // Les téléphones se relient en direct (WebRTC) ; le service gratuit PeerJS sert juste à les présenter.
+  const PREFIXE = "ponctuel-doomsday-";
+  const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const ORDRE = [1, 2, 3, 4, 5, 6, 0]; // boutons du lundi au dimanche
+  const $ = id => document.getElementById(id);
+
+  const jourDe = iso => new Date(iso + "T00:00:00Z").getUTCDay();
+  const formate = iso => new Date(iso + "T00:00:00Z").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  console.assert(jourDe("2000-01-01") === 6 && jourDe("1969-07-20") === 0 && jourDe("2026-11-24") === 2, "calcul du jour");
+
+  function dateAuHasard() {
+    const debut = Date.UTC(1900, 0, 1), fin = Date.UTC(2099, 11, 31);
+    const jour = Math.floor(Math.random() * ((fin - debut) / 864e5 + 1));
+    return new Date(debut + jour * 864e5).toISOString().slice(0, 10);
+  }
+
+  function lire(cle) { try { return localStorage.getItem(cle) || ""; } catch { return ""; } }
+  function ecrire(cle, v) { try { localStorage.setItem(cle, v); } catch {} }
+
+  // ---------- Joueur ----------
+  const joueur = { id: lire("dd-id") || Math.random().toString(36).slice(2), pseudo: "", n: 0, debut: 0 };
+  ecrire("dd-id", joueur.id);
+
+  $("pseudo").value = lire("dd-pseudo");
+  $("code").value = new URLSearchParams(location.search).get("code") || "";
+  $("form-login").addEventListener("submit", e => {
+    e.preventDefault();
+    const p = $("pseudo").value.trim();
+    if (!p) { $("err-pseudo").textContent = "Écris un pseudo pour rejoindre."; $("pseudo").focus(); return; }
+    $("err-pseudo").textContent = "";
+    const code = $("code").value.trim();
+    if (!/^\d{4}$/.test(code)) { $("err-code").textContent = "Le code a 4 chiffres : demande-le au maître du jeu."; $("code").focus(); return; }
+    $("err-code").textContent = "";
+    joueur.pseudo = p; ecrire("dd-pseudo", p);
+    $("moi").textContent = p;
+    connecter(code);
+  });
+
+  function connecter(code) {
+    const bouton = $("form-login").querySelector("button");
+    bouton.disabled = true; bouton.textContent = "Connexion…";
+    const echec = msg => {
+      bouton.disabled = false; bouton.textContent = "Rejoindre";
+      joueur.pseudo = ""; montrer("login");
+      $("err-code").textContent = msg;
+    };
+    if (joueur.peer) joueur.peer.destroy();
+    const peer = joueur.peer = new Peer();
+    peer.on("error", e => echec(e.type === "peer-unavailable" ? "Partie introuvable : vérifie le code." : "Connexion impossible. Réessaie."));
+    peer.on("open", () => {
+      const conn = joueur.conn = peer.connect(PREFIXE + code, { reliable: true });
+      conn.on("open", () => {
+        bouton.disabled = false; bouton.textContent = "Rejoindre";
+        montrer("jeu");
+        conn.send({ t: "join", id: joueur.id, pseudo: joueur.pseudo });
+      });
+      conn.on("data", m => { if (m.t === "question") recevoirQuestion(m.n, m.date); });
+      conn.on("close", () => { joueur.n = 0; echec("Connexion perdue. Appuie sur Rejoindre pour revenir."); });
+    });
+  }
+
+  for (const j of ORDRE) {
+    const b = document.createElement("button");
+    b.textContent = JOURS[j][0].toUpperCase() + JOURS[j].slice(1);
+    b.setAttribute("aria-pressed", "false");
+    b.onclick = () => repondre(j, b);
+    $("jours").append(b);
+  }
+
+  function repondre(j, bouton) {
+    for (const b of $("jours").children) b.disabled = true;
+    bouton.setAttribute("aria-pressed", "true");
+    $("j-etat").textContent = "Réponse envoyée. Attends la question suivante.";
+    joueur.conn.send({ t: "answer", id: joueur.id, pseudo: joueur.pseudo, n: joueur.n, jour: j, ms: Date.now() - joueur.debut });
+  }
+
+  function recevoirQuestion(n, date) {
+    if (n === joueur.n) return;
+    joueur.n = n; joueur.debut = Date.now();
+    $("j-num").textContent = "Question " + n;
+    $("j-date").textContent = formate(date);
+    $("jours").hidden = false;
+    for (const b of $("jours").children) { b.disabled = false; b.setAttribute("aria-pressed", "false"); }
+    $("j-etat").textContent = "Quel jour de la semaine ?";
+  }
+
+  // ---------- Maître du jeu ----------
+  const partie = { n: 0, date: "", joueurs: new Map(), conns: new Set(), peer: null }; // id → { pseudo, rep: {jour, ms} | null }
+
+  $("suivante").onclick = () => {
+    partie.n++; partie.date = dateAuHasard();
+    for (const j of partie.joueurs.values()) j.rep = null;
+    $("m-num").textContent = "Question " + partie.n;
+    $("m-date").textContent = formate(partie.date);
+    $("m-bonne").textContent = "Bonne réponse : " + JOURS[jourDe(partie.date)];
+    $("suivante").textContent = "Question suivante";
+    envoyerQuestion();
+    afficherJoueurs();
+  };
+
+  function envoyerQuestion() {
+    if (!partie.n) return;
+    for (const c of partie.conns) if (c.open) c.send({ t: "question", n: partie.n, date: partie.date });
+  }
+
+  function afficherJoueurs() {
+    const ul = $("joueurs"); ul.textContent = "";
+    $("m-titre").textContent = "Joueurs (" + partie.joueurs.size + ")";
+    $("m-vide").hidden = partie.joueurs.size > 0;
+    const bonne = partie.date ? jourDe(partie.date) : -1;
+    for (const j of partie.joueurs.values()) {
+      const li = document.createElement("li");
+      const nom = document.createElement("span"); nom.className = "pseudo"; nom.textContent = j.pseudo;
+      li.append(nom);
+      const r = document.createElement("span");
+      if (!partie.n) { r.className = "rep"; r.textContent = "Prêt"; }
+      else if (!j.rep) { r.className = "rep"; r.textContent = "Réfléchit…"; }
+      else {
+        const juste = j.rep.jour === bonne;
+        r.className = juste ? "ok" : "ko";
+        r.textContent = (juste ? "✓ Juste : " : "✗ Faux : ") + JOURS[j.rep.jour];
+        const t = document.createElement("span"); t.className = "temps";
+        t.textContent = (j.rep.ms / 1000).toFixed(1) + " s";
+        li.append(r, t); ul.append(li); continue;
+      }
+      li.append(r); ul.append(li);
+    }
+  }
+
+  // shortcut: recharger la page du maître du jeu crée une nouvelle partie (nouveau code), à garder si ça gêne.
+  function ouvrirPartie() {
+    if (partie.peer) return;
+    const code = String(Math.floor(1000 + Math.random() * 9000));
+    const peer = partie.peer = new Peer(PREFIXE + code);
+    peer.on("open", () => {
+      $("m-code").textContent = code;
+      const lien = location.href.split(/[?#]/)[0] + "?code=" + code + "#joueur";
+      $("m-lien").textContent = "Lien direct pour les joueurs : " + lien;
+    });
+    peer.on("error", e => {
+      if (e.type === "unavailable-id") { partie.peer = null; peer.destroy(); ouvrirPartie(); } // code déjà pris : on en tire un autre
+      else if (e.type !== "peer-unavailable") $("m-lien").textContent = "Connexion impossible. Vérifie internet puis recharge la page.";
+    });
+    peer.on("connection", conn => {
+      partie.conns.add(conn);
+      conn.on("close", () => partie.conns.delete(conn));
+      conn.on("data", m => {
+        if (m.t === "join") {
+          const ancien = partie.joueurs.get(m.id);
+          partie.joueurs.set(m.id, { pseudo: m.pseudo, rep: ancien ? ancien.rep : null });
+          afficherJoueurs();
+          if (partie.n) conn.send({ t: "question", n: partie.n, date: partie.date });
+        }
+        if (m.t === "answer" && m.n === partie.n) {
+          const j = partie.joueurs.get(m.id) || { pseudo: m.pseudo };
+          if (j.rep) return; // une seule réponse par question
+          j.rep = { jour: m.jour, ms: m.ms };
+          partie.joueurs.set(m.id, j); afficherJoueurs();
+        }
+      });
+    });
+  }
+
+  // ---------- Navigation ----------
+  const role = () => location.hash.slice(1);
+  function montrer(id) { for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== id; }
+  function route() {
+    if (role() === "maitre") { montrer("maitre"); afficherJoueurs(); ouvrirPartie(); }
+    else if (role() === "joueur") { montrer(joueur.pseudo ? "jeu" : "login"); if (!joueur.pseudo) $("pseudo").focus(); }
+    else montrer("accueil");
+  }
+  addEventListener("hashchange", route);
+  route();
+</script>
+</body>
+</html>
