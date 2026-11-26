@@ -169,12 +169,29 @@
 
 <script>
   // Questions du quiz : une ligne par question, "bonne" = numéro de la bonne réponse (0 = A, 1 = B, 2 = C, 3 = D).
-  // shortcut: questions de test, à remplacer par les vraies questions.
-  const QUESTIONS = Array.from({ length: 20 }, (_, i) => ({
-    q: "Question test " + (i + 1) + " : quelle est la bonne réponse ?",
-    choix: ["Réponse A", "Réponse B", "Réponse C", "Réponse D"],
-    bonne: (i * 7 + 3) % 4,
-  }));
+  const QUESTIONS = [
+    { q: "Quel acteur joue Doctor Doom ?", choix: ["Chris Evans", "Robert Downey Jr.", "Pedro Pascal", "Tom Hiddleston"], bonne: 1 },
+    { q: "De quel pays Doom est-il le souverain ?", choix: ["La Latvérie", "La Sokovie", "Le Wakanda", "Genosha"], bonne: 0 },
+    { q: "Pourquoi Doom est-il si redoutable ?", choix: ["Il ne maîtrise que la technologie", "Il ne maîtrise que la magie", "Il est le plus rapide", "Il maîtrise la science et la magie"], bonne: 3 },
+    { q: "Dans les comics, qui est le grand rival de Doom ?", choix: ["Tony Stark", "Reed Richards", "Charles Xavier", "Thor"], bonne: 1 },
+    { q: "Comment Tony Stark meurt-il dans Endgame ?", choix: ["Tué par Thanos en duel", "Dans l'explosion du QG des Avengers", "Perdu dans le Royaume quantique", "En claquant des doigts avec les Pierres d'Infinité"], bonne: 3 },
+    { q: "Que fait Steve Rogers à la fin d'Endgame ?", choix: ["Il meurt au combat", "Il part dans l'espace", "Il reste dans le passé avec Peggy Carter", "Il rejoint la TVA"], bonne: 2 },
+    { q: "Qui a hérité du bouclier de Captain America ?", choix: ["Bucky Barnes", "John Walker", "Sam Wilson", "Peter Parker"], bonne: 2 },
+    { q: "Que surveille la TVA ?", choix: ["Les Pierres d'Infinité", "Les mutants", "Le Royaume quantique", "Les lignes temporelles"], bonne: 3 },
+    { q: "À la fin de la saison 2 de Loki, que devient Loki ?", choix: ["Le roi d'Asgard", "Un simple agent de la TVA", "Le gardien qui maintient les lignes temporelles", "Un prisonnier du Vide"], bonne: 2 },
+    { q: "Qu'est-ce qu'une « incursion » ?", choix: ["Un voyage dans le temps", "La collision de deux univers, qui peut les détruire", "Une invasion extraterrestre", "Une variante de Loki"], bonne: 1 },
+    { q: "Dans quel film les incursions sont-elles présentées ?", choix: ["Doctor Strange in the Multiverse of Madness", "Black Widow", "Les Éternels", "Spider-Man: Homecoming"], bonne: 0 },
+    { q: "Quel est le pouvoir de Sue Storm ?", choix: ["Contrôler le feu", "Un corps élastique", "Une force surhumaine", "L'invisibilité et les champs de force"], bonne: 3 },
+    { q: "Comment surnomme-t-on Ben Grimm ?", choix: ["La Chose", "La Torche", "Le Fauve", "Le Colosse"], bonne: 0 },
+    { q: "Sur quelle Terre se déroule Les 4 Fantastiques : Premiers Pas ?", choix: ["Terre-616", "Terre-199999", "Terre-828", "Terre-10005"], bonne: 2 },
+    { q: "Dans Thunderbolts*, que cache l'astérisque du titre ?", choix: ["Une scène après le générique", "L'équipe devient les « New Avengers »", "Le retour d'Iron Man", "Un deuxième film"], bonne: 1 },
+    { q: "Quel membre des Thunderbolts devient Sentry ?", choix: ["Bob", "Yelena Belova", "John Walker", "Alexei Shostakov"], bonne: 0 },
+    { q: "Quel acteur joue le Professeur X dans les X-Men de la Fox ?", choix: ["Ian McKellen", "Patrick Stewart", "Hugh Jackman", "Kelsey Grammer"], bonne: 1 },
+    { q: "Quel est le pouvoir de Diablo (Nightcrawler) ?", choix: ["La télépathie", "Les rafales optiques", "La métamorphose", "La téléportation"], bonne: 3 },
+    { q: "Dans Deadpool & Wolverine, où sont envoyés les personnages effacés ?", choix: ["Le Royaume quantique", "La Latvérie", "Le Vide", "Asgard"], bonne: 2 },
+    { q: "Quel film Avengers sortira après Doomsday ?", choix: ["Avengers: Secret Wars", "Avengers: The Kang Dynasty", "Avengers: Age of Ultron 2", "Avengers: Battleworld"], bonne: 0 },
+  ];
+  console.assert(QUESTIONS.every(x => x.choix.length === 4 && x.bonne >= 0 && x.bonne < 4), "questions");
 
   // Les téléphones se relient en direct (WebRTC) ; le service gratuit PeerJS sert juste à les présenter.
   const PREFIXE = "ponctuel-doomsday-";
