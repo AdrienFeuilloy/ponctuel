@@ -168,30 +168,50 @@
 </main>
 
 <script>
-  // Questions du quiz : une ligne par question, "bonne" = numéro de la bonne réponse (0 = A, 1 = B, 2 = C, 3 = D).
-  const QUESTIONS = [
-    { q: "Quel acteur joue Doctor Doom ?", choix: ["Chris Evans", "Robert Downey Jr.", "Pedro Pascal", "Tom Hiddleston"], bonne: 1 },
-    { q: "De quel pays Doom est-il le souverain ?", choix: ["La Latvérie", "La Sokovie", "Le Wakanda", "Genosha"], bonne: 0 },
-    { q: "Pourquoi Doom est-il si redoutable ?", choix: ["Il ne maîtrise que la technologie", "Il ne maîtrise que la magie", "Il est le plus rapide", "Il maîtrise la science et la magie"], bonne: 3 },
-    { q: "Dans les comics, qui est le grand rival de Doom ?", choix: ["Tony Stark", "Reed Richards", "Charles Xavier", "Thor"], bonne: 1 },
-    { q: "Comment Tony Stark meurt-il dans Endgame ?", choix: ["Tué par Thanos en duel", "Dans l'explosion du QG des Avengers", "Perdu dans le Royaume quantique", "En claquant des doigts avec les Pierres d'Infinité"], bonne: 3 },
-    { q: "Que fait Steve Rogers à la fin d'Endgame ?", choix: ["Il meurt au combat", "Il part dans l'espace", "Il reste dans le passé avec Peggy Carter", "Il rejoint la TVA"], bonne: 2 },
-    { q: "Qui a hérité du bouclier de Captain America ?", choix: ["Bucky Barnes", "John Walker", "Sam Wilson", "Peter Parker"], bonne: 2 },
-    { q: "Que surveille la TVA ?", choix: ["Les Pierres d'Infinité", "Les mutants", "Le Royaume quantique", "Les lignes temporelles"], bonne: 3 },
-    { q: "À la fin de la saison 2 de Loki, que devient Loki ?", choix: ["Le roi d'Asgard", "Un simple agent de la TVA", "Le gardien qui maintient les lignes temporelles", "Un prisonnier du Vide"], bonne: 2 },
-    { q: "Qu'est-ce qu'une « incursion » ?", choix: ["Un voyage dans le temps", "La collision de deux univers, qui peut les détruire", "Une invasion extraterrestre", "Une variante de Loki"], bonne: 1 },
-    { q: "Dans quel film les incursions sont-elles présentées ?", choix: ["Doctor Strange in the Multiverse of Madness", "Black Widow", "Les Éternels", "Spider-Man: Homecoming"], bonne: 0 },
-    { q: "Quel est le pouvoir de Sue Storm ?", choix: ["Contrôler le feu", "Un corps élastique", "Une force surhumaine", "L'invisibilité et les champs de force"], bonne: 3 },
-    { q: "Comment surnomme-t-on Ben Grimm ?", choix: ["La Chose", "La Torche", "Le Fauve", "Le Colosse"], bonne: 0 },
-    { q: "Sur quelle Terre se déroule Les 4 Fantastiques : Premiers Pas ?", choix: ["Terre-616", "Terre-199999", "Terre-828", "Terre-10005"], bonne: 2 },
-    { q: "Dans Thunderbolts*, que cache l'astérisque du titre ?", choix: ["Une scène après le générique", "L'équipe devient les « New Avengers »", "Le retour d'Iron Man", "Un deuxième film"], bonne: 1 },
-    { q: "Quel membre des Thunderbolts devient Sentry ?", choix: ["Bob", "Yelena Belova", "John Walker", "Alexei Shostakov"], bonne: 0 },
-    { q: "Quel acteur joue le Professeur X dans les X-Men de la Fox ?", choix: ["Ian McKellen", "Patrick Stewart", "Hugh Jackman", "Kelsey Grammer"], bonne: 1 },
-    { q: "Quel est le pouvoir de Diablo (Nightcrawler) ?", choix: ["La télépathie", "Les rafales optiques", "La métamorphose", "La téléportation"], bonne: 3 },
-    { q: "Dans Deadpool & Wolverine, où sont envoyés les personnages effacés ?", choix: ["Le Royaume quantique", "La Latvérie", "Le Vide", "Asgard"], bonne: 2 },
-    { q: "Quel film Avengers sortira après Doomsday ?", choix: ["Avengers: Secret Wars", "Avengers: The Kang Dynasty", "Avengers: Age of Ultron 2", "Avengers: Battleworld"], bonne: 0 },
-  ];
-  console.assert(QUESTIONS.every(x => x.choix.length === 4 && x.bonne >= 0 && x.bonne < 4), "questions");
+  // Questions du quiz, rangées par partie. Sur chaque ligne : la question, puis la BONNE réponse, puis 3 fausses.
+  // Le quiz mélange l'ordre des réponses tout seul.
+  const PARTIES = {
+    "Contexte": [
+      ["Comment Tony Stark meurt-il dans Endgame ?", "En claquant des doigts avec les Pierres d'Infinité", "Tué par Thanos en duel", "Dans l'explosion du QG des Avengers", "Perdu dans le Royaume quantique"],
+      ["Que fait Steve Rogers à la fin d'Endgame ?", "Il reste dans le passé avec Peggy Carter", "Il meurt au combat", "Il part dans l'espace", "Il rejoint la TVA"],
+      ["Que surveille la TVA ?", "Les lignes temporelles", "Les Pierres d'Infinité", "Les mutants", "Le Royaume quantique"],
+      ["À la fin de la saison 2 de Loki, que devient Loki ?", "Le gardien qui maintient les lignes temporelles", "Le roi d'Asgard", "Un simple agent de la TVA", "Un prisonnier du Vide"],
+      ["Qu'est-ce qu'une « variante » ?", "Une autre version d'une même personne, venue d'une autre réalité", "Un clone fabriqué en laboratoire", "Un mutant qui change d'apparence", "Un agent secret de la TVA"],
+      ["Qu'est-ce qu'une « incursion » ?", "La collision de deux univers, qui peut les détruire", "Un voyage dans le temps", "Une invasion extraterrestre", "Une variante de Loki"],
+      ["Dans quel film les incursions sont-elles présentées ?", "Doctor Strange in the Multiverse of Madness", "Black Widow", "Les Éternels", "Spider-Man: Homecoming"],
+      ["Quel film ouvre concrètement le multivers en réunissant plusieurs Spider-Man ?", "Spider-Man: No Way Home", "Spider-Man: Far From Home", "Spider-Man: Homecoming", "Spider-Man: Across the Spider-Verse"],
+      ["Quel grand méchant est révélé dans Ant-Man et la Guêpe : Quantumania ?", "Kang", "Ultron", "Thanos", "Le Mandarin"],
+      ["À la fin de The Marvels, quel X-Man apparaît ?", "Le Fauve", "Wolverine", "Tornade", "Cyclope"],
+      ["Sur quelle Terre se déroule Les 4 Fantastiques : Premiers Pas ?", "Terre-828", "Terre-616", "Terre-199999", "Terre-10005"],
+      ["Dans Thunderbolts*, que cache l'astérisque du titre ?", "L'équipe devient les « New Avengers »", "Une scène après le générique", "Le retour d'Iron Man", "Un deuxième film"],
+      ["Dans Deadpool & Wolverine, où sont envoyés les personnages effacés ?", "Le Vide", "Le Royaume quantique", "La Latvérie", "Asgard"],
+      ["Dans les comics Secret Wars, comment s'appelle le monde fait de morceaux de réalités ?", "Battleworld", "Counter-Earth", "Krakoa", "Sakaar"],
+      ["Quel film Avengers sortira après Doomsday ?", "Avengers: Secret Wars", "Avengers: The Kang Dynasty", "Avengers: Age of Ultron 2", "Avengers: Battleworld"],
+    ],
+    "Personnages et capacités": [
+      ["De quel pays Doom est-il le souverain ?", "La Latvérie", "La Sokovie", "Le Wakanda", "Genosha"],
+      ["Pourquoi Doom est-il si redoutable ?", "Il maîtrise la science et la magie", "Il ne maîtrise que la technologie", "Il ne maîtrise que la magie", "Il est le plus rapide"],
+      ["Dans les comics, qui est le grand rival de Doom ?", "Reed Richards", "Tony Stark", "Charles Xavier", "Thor"],
+      ["Qui a hérité du bouclier de Captain America ?", "Sam Wilson", "Bucky Barnes", "John Walker", "Peter Parker"],
+      ["Quel est le pouvoir de Sue Storm ?", "L'invisibilité et les champs de force", "Contrôler le feu", "Un corps élastique", "Une force surhumaine"],
+      ["Comment surnomme-t-on Ben Grimm ?", "La Chose", "La Torche", "Le Fauve", "Le Colosse"],
+      ["Quel membre des Thunderbolts devient Sentry ?", "Bob", "Yelena Belova", "John Walker", "Alexei Shostakov"],
+      ["Quel monde Scott Lang (Ant-Man) connaît-il bien ?", "Le Royaume quantique", "La Dimension noire", "Le Vide", "Asgard"],
+      ["Quelle arme maîtrise Shang-Chi ?", "Les Dix Anneaux", "Le Mjolnir", "L'Œil d'Agamotto", "Le Gant de l'Infini"],
+      ["Qui est devenu Black Panther dans Wakanda Forever ?", "Shuri", "M'Baku", "Okoye", "Nakia"],
+      ["Comment s'appelle le royaume sous-marin de Namor ?", "Talokan", "Atlantis", "Latvérie", "Madripoor"],
+      ["Quel acteur joue le Professeur X dans les X-Men de la Fox ?", "Patrick Stewart", "Ian McKellen", "Hugh Jackman", "Kelsey Grammer"],
+      ["Quel est le pouvoir de Magneto ?", "Contrôler le métal", "La télépathie", "Contrôler la météo", "La téléportation"],
+      ["Quel est le pouvoir de Cyclope ?", "Les rafales optiques", "La métamorphose", "L'invisibilité", "La super-vitesse"],
+      ["Quel est le pouvoir de Diablo (Nightcrawler) ?", "La téléportation", "La télépathie", "Les rafales optiques", "La métamorphose"],
+    ],
+  };
+  const melange = t => { for (let i = t.length - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [t[i], t[k]] = [t[k], t[i]]; } return t; };
+  const QUESTIONS = Object.entries(PARTIES).flatMap(([partie, liste]) => liste.map(([q, bonne, ...fausses]) => {
+    const choix = melange([bonne, ...fausses]);
+    return { partie, q, choix, bonne: choix.indexOf(bonne) };
+  }));
+  console.assert(QUESTIONS.every(x => x.choix.length === 4 && x.bonne >= 0), "questions");
 
   // Les téléphones se relient en direct (WebRTC) ; le service gratuit PeerJS sert juste à les présenter.
   const PREFIXE = "ponctuel-doomsday-";
@@ -264,7 +284,7 @@
     if (m.t === "question") {
       if (m.n !== joueur.n) joueur.choix = m.choix ?? -1;
       joueur.n = m.n;
-      $("j-num").textContent = "Question " + m.n + " / " + m.total;
+      $("j-num").textContent = m.partie + " · Question " + m.n + " / " + m.total;
       $("j-question").textContent = m.q;
       $("j-reponses").hidden = false;
       boutonsReponses($("j-reponses"), m.reponses, repondre);
@@ -340,7 +360,7 @@
     if (!conn || !conn.open || !j) return;
     const Q = QUESTIONS[partie.i];
     if (partie.phase === "question" || partie.phase === "reveal")
-      conn.send({ t: "question", n: partie.i + 1, total: QUESTIONS.length, q: Q.q, reponses: Q.choix, choix: j.choix, score: j.score });
+      conn.send({ t: "question", n: partie.i + 1, total: QUESTIONS.length, partie: Q.partie, q: Q.q, reponses: Q.choix, choix: j.choix, score: j.score });
     if (partie.phase === "reveal") conn.send({ t: "reveal", n: partie.i + 1, bonne: Q.bonne, score: j.score });
     if (partie.phase === "fin") {
       // ex æquo = même rang
@@ -354,7 +374,7 @@
     const enJeu = partie.phase === "question" || partie.phase === "reveal";
     $("m-carte").hidden = !enJeu;
     if (enJeu) {
-      $("m-num").textContent = "Question " + (partie.i + 1) + " / " + QUESTIONS.length;
+      $("m-num").textContent = Q.partie + " · Question " + (partie.i + 1) + " / " + QUESTIONS.length;
       $("m-question").textContent = Q.q;
       boutonsReponses($("m-reponses"), Q.choix);
       const reps = $("m-reponses").children;
