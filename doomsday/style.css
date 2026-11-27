@@ -1,0 +1,161 @@
+/* Ambiance sorcier : émeraude sur nuit profonde, filets dorés, runes gravées. Thème sombre uniquement. */
+@font-face {
+  font-family: "Cinzel"; font-weight: 400 900; font-display: swap;
+  src: url("polices/cinzel.woff2") format("woff2");
+}
+:root {
+  --bg: #020604; --surface: rgba(5, 17, 11, .9); --surface-2: rgba(10, 30, 20, .92); --text: #eaf6ef; --muted: #a3c2b0;
+  --border: rgba(216, 179, 106, .3); --emer: #39f29a; --on-emer: #02130a; --or: #d8b36a; --metal: #ece0c4;
+  --ok: #6ff0a8; --ok-bg: rgba(14, 64, 38, .95); --ko: #ff9a8f; --ko-bg: rgba(66, 18, 16, .95);
+  --radius: 12px; --speed: 160ms; --sortie: cubic-bezier(.16, 1, .3, 1);
+  --titre: "Cinzel", "Palatino Linotype", Palatino, Georgia, serif;
+  color-scheme: dark;
+  background: radial-gradient(ellipse 120% 70% at 50% 0%, #06170e, var(--bg) 70%) var(--bg);
+  scrollbar-color: #1c5238 var(--bg);
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+::selection { background: rgba(57, 242, 154, .35); color: #fff; }
+body { margin: 0; min-height: 100dvh; color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+
+/* Grand portail de fond et ciel de runes */
+#ciel { position: fixed; inset: 0; z-index: 3; width: 100%; height: 100%; pointer-events: none; }
+#portail {
+  position: fixed; z-index: 0; left: 50%; top: 40%; width: min(125vmin, 860px); aspect-ratio: 1; translate: -50% -50%;
+  border-radius: 50%; pointer-events: none; opacity: .3; transition: opacity .8s, scale 1.2s var(--sortie);
+  background: radial-gradient(circle, rgba(57, 242, 154, .2), rgba(57, 242, 154, .05) 42%, transparent 66%);
+}
+#portail svg, .sceau svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: var(--emer); stroke-width: .5; stroke-linecap: round; stroke-linejoin: round; }
+#portail path, .sceau path { stroke-width: 1.6; }
+.or { stroke: var(--or); }
+.points { stroke-width: 1.8; stroke-dasharray: 0 3.4; }
+body:has(#accueil:not([hidden])) #portail { opacity: .55; top: 30%; }
+body.fin #portail { opacity: .8; scale: 1.12; top: 58%; }
+
+h1 {
+  margin: 0 0 8px; font: 700 clamp(1.625rem, 7vw, 2.25rem)/1.15 var(--titre); letter-spacing: .04em;
+  color: var(--metal); text-wrap: balance; text-shadow: 0 2px 14px #000;
+}
+h1 em { font-style: normal; font-weight: 900; color: var(--emer); text-shadow: 0 0 24px rgba(57, 242, 154, .55), 0 2px 10px #000; }
+#accueil { text-align: center; padding-top: 14vh; }
+#accueil h1 { font-size: clamp(1.25rem, 5.5vw, 1.75rem); letter-spacing: .12em; }
+#accueil h1 em { display: block; margin-top: 4px; font-size: clamp(2.5rem, 12.5vw, 5.5rem); letter-spacing: .06em; line-height: 1; }
+#accueil .muted { margin-bottom: 40px; color: var(--text); text-shadow: 0 0 6px #000, 0 1px 12px #000; }
+h2 { margin: 32px 0 12px; font: 700 1.125rem/1.3 var(--titre); letter-spacing: .1em; color: var(--metal); }
+.muted { color: var(--muted); margin: 0 0 24px; }
+.muted, .retour, h2 { text-shadow: 0 0 6px #000, 0 1px 10px #000; }
+.retour { display: inline-block; margin-bottom: 16px; color: var(--muted); text-underline-offset: 3px; }
+.retour:hover { color: var(--emer); }
+
+/* Cartes : plaque de grimoire à double filet */
+.carte {
+  position: relative; padding: 24px 16px; margin-bottom: 16px; text-align: center;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow: 0 18px 40px -14px rgba(0, 0, 0, .8), inset 0 0 48px rgba(57, 242, 154, .06);
+}
+.carte::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(216, 179, 106, .13); border-radius: 8px; pointer-events: none; }
+.num { color: var(--or); font: 600 .875rem/1.4 var(--titre); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.gros { margin: 8px 0; font-size: clamp(1.75rem, 7vw, 2.5rem); font-weight: 700; line-height: 1.2; }
+.question { margin: 8px 0 0; font-size: 1.25rem; font-weight: 700; line-height: 1.35; text-wrap: balance; }
+.choix { display: grid; gap: 12px; }
+
+button, .bouton {
+  min-height: 48px; padding: 12px 16px; border-radius: var(--radius); font: inherit; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  cursor: pointer; touch-action: manipulation; text-decoration: none; text-align: center;
+  transition: border-color var(--speed) ease, box-shadow var(--speed) ease, transform var(--speed) ease;
+}
+button:hover, .bouton:hover { border-color: var(--emer); box-shadow: 0 0 18px rgba(57, 242, 154, .18); }
+button:active, .bouton:active { transform: scale(.98); }
+button:focus-visible, .bouton:focus-visible, input:focus-visible, .retour:focus-visible { outline: 3px solid var(--or); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: default; transform: none; }
+.principal {
+  font: 700 1.0625rem/1.2 var(--titre); letter-spacing: .08em; color: var(--on-emer); border-color: #9af8cb;
+  background: linear-gradient(180deg, #6cf7b6, #1fc77a);
+  box-shadow: 0 8px 28px -8px rgba(57, 242, 154, .6), inset 0 1px 0 rgba(255, 255, 255, .45);
+}
+.principal:hover { border-color: #fff3d6; box-shadow: 0 8px 32px -6px rgba(57, 242, 154, .8), inset 0 1px 0 rgba(255, 255, 255, .45); }
+
+/* Les 4 réponses : chaque lettre est une rune gravée */
+.reponses { display: grid; gap: 8px; margin-top: 16px; text-align: left; }
+@media (min-width: 560px) { .reponses { grid-template-columns: 1fr 1fr; } }
+.rep {
+  display: flex; align-items: center; gap: 12px; padding: 12px; min-height: 56px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: rgba(3, 12, 8, .92);
+  font-weight: 500; text-align: left;
+}
+.lettre {
+  position: relative; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid var(--or); color: var(--or); font: 800 1rem/1 var(--titre);
+  background: radial-gradient(circle at 50% 30%, #1d3a2b, #06120c);
+}
+.rep[aria-pressed="true"] { border-color: var(--or); box-shadow: inset 0 0 0 1px var(--or), 0 0 26px rgba(216, 179, 106, .35); opacity: 1; }
+.rep[aria-pressed="true"] .lettre { color: #fff3d6; box-shadow: 0 0 14px rgba(216, 179, 106, .75); }
+.rep.bonne { border-color: var(--ok); background: var(--ok-bg); box-shadow: 0 0 28px rgba(57, 242, 154, .35); opacity: 1; }
+.rep.bonne .lettre { background: var(--emer); color: var(--on-emer); border-color: #c4ffe2; box-shadow: 0 0 16px var(--emer); }
+.rep.fausse { border-color: var(--ko); background: var(--ko-bg); opacity: 1; }
+.rep.fausse .lettre { color: var(--ko); border-color: var(--ko); background: #1a0806; }
+/* La rune se fend */
+.rep.fausse .lettre::after {
+  content: ""; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Cpath d='M9 0L15 11L11 16L20 24L17 34' fill='none' stroke='%23ff9a8f' stroke-width='1.6'/%3E%3C/svg%3E");
+}
+.compte { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Cercle runique autour du code de la partie */
+.sceau { position: relative; display: grid; place-items: center; width: 240px; max-width: 100%; aspect-ratio: 1; margin: 8px auto; }
+.sceau::before { content: ""; position: absolute; inset: 15%; border-radius: 50%; background: radial-gradient(circle, rgba(57, 242, 154, .16), transparent 70%); }
+#m-code { position: relative; margin: 0; color: var(--metal); font: 700 2.25rem/1 var(--titre); letter-spacing: .14em; padding-left: .14em; font-variant-numeric: tabular-nums; text-shadow: 0 0 18px rgba(216, 179, 106, .5); }
+
+label { display: block; font-weight: 600; margin-bottom: 8px; }
+input {
+  width: 100%; min-height: 48px; padding: 12px; font: inherit; border-radius: var(--radius);
+  border: 1px solid var(--border); background: rgba(2, 9, 6, .92); color: var(--text); caret-color: var(--or);
+}
+input:hover { border-color: rgba(57, 242, 154, .5); }
+.erreur { color: var(--ko); margin: 8px 0 0; }
+form { display: grid; gap: 16px; }
+.etat { margin: 16px 0 0; color: var(--muted); }
+.etat.ok { color: var(--ok); font-weight: 600; }
+.etat.ko { color: var(--ko); font-weight: 600; }
+.petit { margin: 8px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+ul, ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+li {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; flex-wrap: wrap;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+body.fin #joueurs li:first-child { border-color: var(--or); box-shadow: 0 0 26px rgba(216, 179, 106, .3); }
+.pseudo { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.info { color: var(--muted); }
+.ok { color: var(--ok); font-weight: 600; }
+.ko { color: var(--ko); font-weight: 600; }
+.pts { font-variant-numeric: tabular-nums; font-weight: 600; }
+.rang { width: 2ch; text-align: right; color: var(--or); font-family: var(--titre); font-weight: 700; font-variant-numeric: tabular-nums; }
+.actions { display: grid; gap: 12px; margin-bottom: 16px; }
+
+/* Mouvement : seulement si la personne ne l'a pas désactivé */
+@media (prefers-reduced-motion: no-preference) {
+  #portail svg { animation: tourne 90s linear infinite; }
+  #portail svg:nth-child(2) { animation-duration: 140s; animation-direction: reverse; }
+  #portail svg:nth-child(3) { animation-duration: 60s; }
+  body.fin #portail svg { animation-duration: 24s; }
+  #portail svg, .sceau svg { will-change: transform; }
+  #portail.ouvre { animation: ouvre 1s var(--sortie); }
+  .sceau svg { animation: tourne 40s linear infinite; }
+  .carte.passe { animation: passe .5s var(--sortie); }
+  .rep[aria-pressed="true"] .lettre { animation: lueur 1.6s ease-in-out infinite alternate; }
+  .rep.fausse .lettre { animation: brise .5s var(--sortie); }
+  .rep.fausse .lettre::after { animation: fissure .3s .1s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carte.passe { animation: fondu .2s ease-out; }
+}
+@keyframes tourne { to { rotate: 360deg; } }
+@keyframes ouvre { from { scale: .55; opacity: 1; } }
+@keyframes passe { from { clip-path: circle(0 at 50% 50%); } to { clip-path: circle(100% at 50% 50%); } }
+@keyframes fondu { from { opacity: .3; } }
+@keyframes lueur { to { box-shadow: 0 0 22px rgba(216, 179, 106, 1); } }
+@keyframes brise { 0% { scale: 1.2; } 35% { rotate: -8deg; } 65% { rotate: 5deg; } }
+@keyframes fissure { from { clip-path: inset(0 0 100% 0); } }
